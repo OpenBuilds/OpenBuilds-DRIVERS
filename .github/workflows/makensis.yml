@@ -9,16 +9,11 @@ jobs:
     strategy:
       matrix:
         # os: [macos-latest, windows-latest, ubuntu-20.04]
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [windows-latest]
 
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
-
-      - name: Install Node.js, NPM and Yarn
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
 
       # new Windows Signing (2024)
       - name: Setup Certificate (Windows)
@@ -62,33 +57,10 @@ jobs:
           smctl windows certsync
         shell: cmd
 
-      - name: Install setuptools (macos)
-        if: startsWith(matrix.os, 'macos')
-        run: sudo -H pip install setuptools
-
-      - name: Prepare for app notarization (macos)
-        if: startsWith(matrix.os, 'macos')
-        # Import Apple API key for app notarization on macOS
-        run: |
-          mkdir -p ~/private_keys/
-          echo '${{ secrets.api_key }}' > ~/private_keys/AuthKey_${{ secrets.api_key_id }}.p8
-
-      - name: Electron Builder Action
-        uses: OpenBuilds/action-electron-build@v1.9.0
+      - name: Create installer
+        uses: joncloud/makensis-action@v4.1
         with:
-          # GitHub token, automatically provided to the action
-          # (No need to define this secret in the repo settings)
-          github_token: ${{ secrets.github_token }}
-          release: true
-          debugElectron: true
-        env:
-          # new MacOS notarize secrets (2024)
-          npm_config_verbose: true
-          npm_config_loglevel: verbose
-          DEBUG: electron-builder # To debug electron-builder
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          arguments: "/V3"
 
       # # new Windows Signing (2024)
       # - name: Signing using Signtool
