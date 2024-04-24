@@ -15,6 +15,11 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v4
 
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       # new Windows Signing (2024)
       - name: Setup Certificate (Windows)
         if: startsWith(matrix.os, 'windows')
@@ -57,20 +62,44 @@ jobs:
           smctl windows certsync
         shell: cmd
 
-      - name: Create installer
-        uses: joncloud/makensis-action@v4.1
-        with:
-            arguments: "/V3"
+      - name: Install setuptools (macos)
+        if: startsWith(matrix.os, 'macos')
+        run: sudo -H pip install setuptools
 
-      # new Windows Signing (2024)
-      - name: Signing using Signtool
-        if: startsWith(matrix.os, 'windows')
+      - name: Prepare for app notarization (macos)
+        if: startsWith(matrix.os, 'macos')
+        # Import Apple API key for app notarization on macOS
         run: |
-                signtool.exe sign /sha1 ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 "D:\a\OpenBuilds-CONTROL\OpenBuilds-CONTROL\dist\*.exe"
-                signtool.exe verify /v /pa "D:\a\OpenBuilds-CONTROL\OpenBuilds-CONTROL\dist\*.exe"
-      # - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+          mkdir -p ~/private_keys/
+          echo '${{ secrets.api_key }}' > ~/private_keys/AuthKey_${{ secrets.api_key_id }}.p8
+
+      - name: Electron Builder Action
+        uses: OpenBuilds/action-electron-build@v1.9.0
         with:
-          name: ${{ matrix.os }}
-          path: |
-            *.exe
+          # GitHub token, automatically provided to the action
+          # (No need to define this secret in the repo settings)
+          github_token: ${{ secrets.github_token }}
+          release: true
+          debugElectron: true
+        env:
+          # new MacOS notarize secrets (2024)
+          npm_config_verbose: true
+          npm_config_loglevel: verbose
+          DEBUG: electron-builder # To debug electron-builder
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      # # new Windows Signing (2024)
+      # - name: Signing using Signtool
+      #   if: startsWith(matrix.os, 'windows')
+      #   run: |
+      #     signtool.exe sign /sha1 ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 "D:\a\OpenBuilds-CONTROL\OpenBuilds-CONTROL\dist\*.exe"
+      #     signtool.exe verify /v /pa "D:\a\OpenBuilds-CONTROL\OpenBuilds-CONTROL\dist\*.exe"
+      #
+      # - name: Upload artifacts
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: ${{ matrix.os }}
+      #     path: |
+      #       dist/*.exe
