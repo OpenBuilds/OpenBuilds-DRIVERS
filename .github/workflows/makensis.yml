@@ -61,6 +61,8 @@ jobs:
         uses: joncloud/makensis-action@v4.1
         with:
           arguments: "/V3"
+          script-file: "openbuilds_drivers.nsi"
+
 
       # # new Windows Signing (2024)
       # - name: Signing using Signtool
