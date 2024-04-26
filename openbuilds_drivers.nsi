@@ -2,7 +2,7 @@
 !include WinVer.nsh   # Windows version detection.
 !include x64.nsh      # X86/X64 version detection.
 
-!define VERSION 1.0.0.0
+!define VERSION 2024.04.26.0
 
 # Set attributes that describe the installer.
 Icon "Assets\openbuilds.ico"
@@ -21,7 +21,7 @@ VIAddVersionKey /LANG=1033 "ProductName" "OpenBuilds USB to UART drivers"
 VIAddVersionKey /LANG=1033 "CompanyName" "OpenBuilds"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "OpenBuilds"
 VIAddVersionKey /LANG=1033 "FileDescription" "OpenBuilds USB to UART drivers (FTDI and Silicon Labs)"
-VIAddVersionKey /LANG=1033 "FileVersion" "1.0.0.0"
+VIAddVersionKey /LANG=1033 "FileVersion" "2024.04.26.0"
 VIProductVersion ${VERSION}
 VIFileVersion ${VERSION}
 
@@ -92,6 +92,12 @@ Section "Silicon Labs USB Uart"
     ExecWait '"$dpinst" /sw /path "$INSTDIR\Drivers\SiLabs_CP210x\Win7"'
   ${EndIf}
 SectionEnd
+
+Section "WCH CH340/341 USB to Serial"
+  DetailPrint "WCH CH340/341 USB to Serial drivers..."
+  ExecWait '"$dpinst"  /q /se /path "$INSTDIR\Drivers\CH341SER"'
+SectionEnd
+
 
 Function .onRebootFailed
    MessageBox MB_OK|MB_ICONSTOP "Reboot failed. Please reboot manually." /SD IDOK
